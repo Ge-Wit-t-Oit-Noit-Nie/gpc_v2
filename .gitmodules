@@ -1,0 +1,3 @@
+[submodule "lib/clogger"]
+	path = lib/clogger
+	url = https://gitlab.com/roguesensei/clogger
