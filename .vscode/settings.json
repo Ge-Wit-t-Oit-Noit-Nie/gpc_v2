@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "emacs": "lisp",
+        "clogger.h": "c"
+    }
+}

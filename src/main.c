@@ -3,28 +3,61 @@
 #include <errno.h>
 #include "clogger.h"
 
+#include "Expression.h"
+#include "Parser.h"
+#include "Lexer.h"
+
+int yyparse(SExpression **expression, yyscan_t scanner);
+
+SExpression *getAST(const char *expr)
+{
+    SExpression *expression;
+    yyscan_t scanner;
+    YY_BUFFER_STATE state;
+
+    if (yylex_init(&scanner))
+    {
+        /* could not initialize */
+        return NULL;
+    }
+
+    state = yy_scan_string(expr, scanner);
+
+    if (yyparse(&expression, scanner))
+    {
+        /* error parsing */
+        return NULL;
+    }
+
+    yy_delete_buffer(state, scanner);
+
+    yylex_destroy(scanner);
+
+    return expression;
+}
+int evaluate(SExpression *e)
+{
+    switch (e->type)
+    {
+    case eVALUE:
+        return e->value;
+    case eMULTIPLY:
+        return evaluate(e->left) * evaluate(e->right);
+    case eADD:
+        return evaluate(e->left) + evaluate(e->right);
+    default:
+        /* should not be here */
+        return 0;
+    }
+}
+
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        clog_error(__FUNCTION__, "Usage: %s <filename>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    const char *filename = argv[1];
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        clog_error(__FUNCTION__, "Error operning file \"%s\" (%d)\n", filename, errno);
-        return EXIT_FAILURE;
-    }
-
-    char buffer[256];
-    while (fgets(buffer, sizeof(buffer), file) != NULL) {
-        printf("%s", buffer);
-    }
-
-    if (fclose(file) != 0) {
-        clog_error(__FUNCTION__, "Error operning file \"%s\" (%d)\n", filename, errno);
-        return EXIT_FAILURE;
-    }
+    
+    char test[] = " 4 + 2*10 + 3*( 5 + 1 )";
+    SExpression *e = getAST(test);
+    int result = evaluate(e);
+    printf("Result of '%s' is %d\n", test, result);
+    deleteExpression(e);
 
     return EXIT_SUCCESS;
 }   
