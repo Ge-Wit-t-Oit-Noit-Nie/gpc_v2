@@ -1,3 +1,11 @@
+%{
+#include "bison.h"
+#include <string.h>
+#include "ast.h"
+#include <stdlib.h>
+
+#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno;
+%}
 %option outfile="lexer.c" header-file="lexer.h"
 %option warn nodefault
 
@@ -6,21 +14,13 @@
 %option bison-locations
 %option yylineno
 
-%{
-#include "bison.h"          /* brings in token definitions and yylval */
-#include "Expression.h"
-#include <string.h>
-#include <stdlib.h>
-#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno;
-
-%}
-
 /* --------------------------------------------------------------
    Macro definitions – these are expanded *before* the rule section.
    -------------------------------------------------------------- */
 DIGIT       [0-9]
 LETTER      [A-Za-z_]
 NUMBER      {DIGIT}+
+HEXNUMBER   0[xX][0-9A-Fa-f]+
 STRING      {LETTER}+
 
 /* ------------------------------------------------------------------ */
@@ -29,6 +29,11 @@ STRING      {LETTER}+
 
 {NUMBER} {
                 yylval->intvalue = atoi(yytext);
+                return TOKEN_NUMBER;
+            }
+{HEXNUMBER} {
+                long val = strtol(yytext, NULL, 16);
+                yylval->intvalue = (int)val;
                 return TOKEN_NUMBER;
             }
 
@@ -42,6 +47,7 @@ STRING      {LETTER}+
 ","        { return TOKEN_PARAM_SEPARATOR; }
 ";"        { return TOKEN_SEMICOLON; }
 ":"        { return TOKEN_COLON; }
+"="        { return TOKEN_ASSIGNMENT; }
 
 [ \t\r]+   { /* ignore whitespace */ }
 

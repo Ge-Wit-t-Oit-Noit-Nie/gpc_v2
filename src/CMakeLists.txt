@@ -7,7 +7,7 @@ find_package(FLEX  REQUIRED)
 # Project sources
 set(PROJECT_SOURCES
     main.c
-    Expression.c
+    ast.c
 )
 
 # -------------------------------------------------------------
@@ -42,8 +42,8 @@ add_custom_command(
 # --------------------------------------------------------------
 # Object library that compiles the generated sources
 add_library(gpcparser OBJECT
-    ${BISON_OUTPUT_C}
     ${FLEX_OUTPUT_C}
+    ${BISON_OUTPUT_C}
     # Add any hand‑written .c files that belong to the parser here:
     # ast.c codegen.c vm.c
 )
@@ -51,6 +51,8 @@ add_library(gpcparser OBJECT
 target_include_directories(gpcparser PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}   # for Parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}   # for your own headers
+    ${PROJECT_SOURCE_DIR}/lib/clogger/include
+    ${PROJECT_SOURCE_DIR}/lib/clogger/src    
 )
 
 add_executable(${PROJECT_NAME}
@@ -70,7 +72,7 @@ target_link_libraries(${PROJECT_NAME}
 # --------------------------------------------------------------
 # Optional: make the generated header visible to IDEs (VSCode, CLion, …)
 source_group("Generated Files" FILES
+    ${FLEX_OUTPUT}
     ${BISON_OUTPUT_C}
     ${BISON_OUTPUT_H}
-    ${FLEX_OUTPUT}
 )
