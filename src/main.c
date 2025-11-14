@@ -4,16 +4,17 @@
 #include "clogger.h"
 
 #include "Expression.h"
-#include "Parser.h"
-#include "Lexer.h"
+#include "bison.h"
+#include "lexer.h"
 
-int yyparse(SExpression **expression, yyscan_t scanner);
+int yyparse(void *, SExpression **expression, yyscan_t scanner);
 
 SExpression *getAST(const char *expr)
 {
     SExpression *expression;
     yyscan_t scanner;
     YY_BUFFER_STATE state;
+    YYLTYPE yylval;
 
     if (yylex_init(&scanner))
     {
@@ -23,7 +24,7 @@ SExpression *getAST(const char *expr)
 
     state = yy_scan_string(expr, scanner);
 
-    if (yyparse(&expression, scanner))
+    if (yyparse(&yylval, &expression, scanner))
     {
         /* error parsing */
         return NULL;
@@ -52,11 +53,31 @@ int evaluate(SExpression *e)
 }
 
 int main(int argc, char *argv[]) {
-    
-    char test[] = " 4 + 2*10 + 3*( 5 + 1 )";
+
+    char test[] = {"START:\nwait(10);STOP;"};
+
     SExpression *e = getAST(test);
-    int result = evaluate(e);
-    printf("Result of '%s' is %d\n", test, result);
+    if (e == NULL) {
+        return EXIT_FAILURE;
+    }
+    //int result = evaluate(e);
+    //printf("Result of '%s' is %d\n", test, result);
+    switch (e->type)
+    {
+    case eLABEL:
+        printf("Parsed label for '%s'\n", e->string);
+
+        break;
+    case eINSTRUCTION:
+        printf("Parsed instruction for '%s'\n", e->string);
+        break;
+
+    default:
+        printf("Unknown type '%s'\n", e->string);
+
+        break;
+    }
+
     deleteExpression(e);
 
     return EXIT_SUCCESS;

@@ -11,6 +11,8 @@
 typedef enum tagEOperationType
 {
     eVALUE,
+    eLABEL,
+    eINSTRUCTION,
     eMULTIPLY,
     eADD
 } EOperationType;
@@ -23,6 +25,7 @@ typedef struct tagSExpression
     EOperationType type; /* /< type of operation */
 
     int value;                    /* /< valid only when type is eVALUE */
+    char *string;
     struct tagSExpression *left;  /* /<  left side of the tree */
     struct tagSExpression *right; /* /< right side of the tree */
 } SExpression;
@@ -33,7 +36,12 @@ typedef struct tagSExpression
  * @return The expression or NULL in case of no memory
  */
 SExpression *createNumber(int value);
-
+SExpression *createLabel(char *name);
+SExpression *createInstruction(char *name);
+/* In Expression.h or wherever you keep your AST constructors */
+SExpression *createInstructionWithParam(const char *name,
+                                        SExpression **args,
+                                        int argc);
 /**
  * @brief It creates an operation
  * @param type The operation type

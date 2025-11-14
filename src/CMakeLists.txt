@@ -12,14 +12,13 @@ set(PROJECT_SOURCES
 
 # -------------------------------------------------------------
 # Paths / filenames
-set(BISON_INPUT   ${CMAKE_CURRENT_SOURCE_DIR}/Parser.y)
-set(FLEX_INPUT    ${CMAKE_CURRENT_SOURCE_DIR}/Lexer.l)
+set(FLEX_INPUT    ${CMAKE_CURRENT_SOURCE_DIR}/lexer.lex)
+set(FLEX_OUTPUT_C   ${CMAKE_CURRENT_BINARY_DIR}/lexer.c)
+set(FLEX_FLAGS "--reentrant" CACHE STRING "Flags passed to flex" FORCE)
 
-set(BISON_OUTPUT_C ${CMAKE_CURRENT_BINARY_DIR}/Parser.c)
-set(BISON_OUTPUT_H ${CMAKE_CURRENT_BINARY_DIR}/Parser.h)
-
-set(FLEX_OUTPUT   ${CMAKE_CURRENT_BINARY_DIR}/Lexer.c)
-
+set(BISON_INPUT   ${CMAKE_CURRENT_SOURCE_DIR}/bison.y)
+set(BISON_OUTPUT_C ${CMAKE_CURRENT_BINARY_DIR}/bison.c)
+set(BISON_OUTPUT_H ${CMAKE_CURRENT_BINARY_DIR}/bison.h)
 
 # --------------------------------------------------------------
 # Bison command
@@ -33,8 +32,8 @@ add_custom_command(
 
 # Flex command (depends on the header produced by Bison)
 add_custom_command(
-    OUTPUT  ${FLEX_OUTPUT}
-    COMMAND ${FLEX_EXECUTABLE} -o${FLEX_OUTPUT} ${FLEX_INPUT}
+    OUTPUT  ${FLEX_OUTPUT_C}
+    COMMAND ${FLEX_EXECUTABLE} ${FLEX_FLAGS} -o${FLEX_OUTPUT_C} ${FLEX_INPUT}
     DEPENDS ${FLEX_INPUT} ${BISON_OUTPUT_H}
     COMMENT "Generating Flex lexer"
     VERBATIM
@@ -44,7 +43,7 @@ add_custom_command(
 # Object library that compiles the generated sources
 add_library(gpcparser OBJECT
     ${BISON_OUTPUT_C}
-    ${FLEX_OUTPUT}
+    ${FLEX_OUTPUT_C}
     # Add any hand‑written .c files that belong to the parser here:
     # ast.c codegen.c vm.c
 )
