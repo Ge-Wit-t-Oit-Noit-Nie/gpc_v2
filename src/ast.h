@@ -18,7 +18,7 @@ typedef struct parameter_s {
   char *name;
   union value {
     char *string;
-    int integer;
+    uint16_t integer;
   } value;
   enum { STRING, INTEGER } type;
 } parameter_t;

@@ -10,7 +10,7 @@
 int main(int argc, char *argv[])
 {
 
-  char test[] = {"START:\nwait(10);wait(hex=0xff);STOP;"};
+  char test[] = {"START:\nzet_poort_uit(poort=1, hsio=1);wachten(hex=0xff);STOPPEN;EINDE:"};
 
   statement_list_t *statements = malloc(sizeof(statement_list_t *));
   ast_parse_string(test, &statements);
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
   } else {
     clog_info(__FILE_NAME__, "Found %d statements", statements->count);
   }
-  
+
   ast_convert_itteration_1(statements);
   ast_delete_statements(statements);
   return EXIT_SUCCESS;
