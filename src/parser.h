@@ -117,7 +117,7 @@ statement_t *parser_create_instruction(const char *name, parameter_t **params,
 statement_t *parser_create_label(const char *name);
 
 int parser_parse_string(const char *expr, statement_list_t **statements);
-
+void parser_free_statements(statement_list_t *statements);
 
 #ifdef __cplusplus
 }

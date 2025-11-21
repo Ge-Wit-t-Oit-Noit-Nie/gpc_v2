@@ -71,10 +71,20 @@ static struct option long_opts[] = {
 /* Short options string: h and v are flags, o and i requires an argument */
 const char *short_opts = "hvo:";
 
-char *read_source_file(const char *filename) {
+/**
+ * @brief Reads the entire content of a source file into a dynamically allocated
+ * string.
+ *
+ * @param filename The path to the source file to read.
+ * @return A pointer to the dynamically allocated string containing the file
+ * content, or NULL if an error occurred.
+ */
+char *read_source_file(const char *filename)
+{
   FILE *file = fopen(filename, "r");
-  if (file == NULL) {
-    clog_error(__FILE_NAME__, "Failed to open file %s: %s", filename, strerror(errno));
+  if (NULL == file) {
+    clog_error(__FILE_NAME__, "Failed to open file %s: %s", filename,
+               strerror(errno));
     return NULL;
   }
 
@@ -84,7 +94,8 @@ char *read_source_file(const char *filename) {
 
   char *buffer = malloc(length + 1);
   if (buffer == NULL) {
-    clog_error(__FILE_NAME__, "Failed to allocate memory for file %s", filename);
+    clog_error(__FILE_NAME__, "Failed to allocate memory for file %s",
+               filename);
     fclose(file);
     return NULL;
   }
@@ -136,7 +147,7 @@ int main(int argc, char *argv[])
 {
 
   int c;
-  int verbose=0;
+  int verbose = 0;
   char *file_output = NULL;
   char *file_input = NULL;
 
@@ -167,7 +178,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if(NULL==file_input || NULL==file_output) {
+  if (NULL == file_input || NULL == file_output) {
     clog_error(__FILE_NAME__, "Input or output file not specified");
     return EXIT_FAILURE;
   }
@@ -175,22 +186,27 @@ int main(int argc, char *argv[])
   // Load source code from file
   const char *source_code = read_source_file(file_input);
 
-  if(NULL==source_code) {
+  if (NULL == source_code) {
     return EXIT_FAILURE;
   }
+
   statement_list_t *statements = malloc(sizeof(statement_list_t *));
   // 1. Parse the program
   parser_parse_string(source_code, &statements);
 
   if (NULL == statements) {
+    free((void *)source_code);
     clog_error(__FILE_NAME__, "Returned no statements");
     return EXIT_FAILURE;
   }
 
   if (0 == statements->count) {
     clog_info(__FILE_NAME__, "No statements parsed");
+    free((void *)source_code);
+    free(statements);
     return EXIT_FAILURE;
   } else {
+    free((void *)source_code);
     clog_info(__FILE_NAME__, "Found %d statements", statements->count);
   }
 
@@ -198,12 +214,15 @@ int main(int argc, char *argv[])
 
   // 2. Perform the first itteration of the convertion
   ast_convert_itteration_1(statements, node_collection);
-
+  
   // 3. Perform the second itteration of the convertion
   ast_convert_itteration_2(node_collection);
 
   // Store the program
   binary_write_program(file_output, node_collection);
+
+  parser_free_statements(statements);
+  ast_free_node_collection(node_collection);
 
   return EXIT_SUCCESS;
 }

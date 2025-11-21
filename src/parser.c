@@ -162,3 +162,34 @@ statement_t *parser_create_label(const char *name)
   statement->name = strdup(name);
   return statement;
 }
+
+/**
+ * @brief Free the memory allocated for a statement list
+ *
+ * Frees all memory associated with the given statement list,
+ * including its statements and their parameters.
+ *
+ * @param statements  The statement list to free
+ */
+void parser_free_statements(statement_list_t *statements) {
+  for (int i = 0; i < statements->count; i++) {
+    statement_t *stmt = statements->statements[i];
+
+    // Free parameters
+    for (int j = 0; j < stmt->args.count; j++) {
+      parameter_t *param = stmt->args.params[j];
+      free(param->name);
+      if (param->type == STRING && param->value.string != NULL) {
+        free(param->value.string);
+      }
+      free(param);
+    }
+    free(stmt->args.params);
+
+    // Free statement name and statement itself
+    free(stmt->name);
+    free(stmt);
+  }
+  free(statements->statements);
+  free(statements);
+}

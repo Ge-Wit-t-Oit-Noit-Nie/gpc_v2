@@ -63,7 +63,7 @@
 
 opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
 {
-  opcode_node_t *node = malloc(sizeof(opcode_node_t *));
+  opcode_node_t *node = malloc(sizeof(opcode_node_t));
 
   /*
    * # | Element | Bitmask               | Hex    | Parameter |
@@ -88,11 +88,13 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     node->size_in_bytes = 2;
     if (1 != statement->args.count) {
       clog_error(__FILE_NAME__, "Wachten heeft 1 parameter nodig");
+      free(node);
       exit(EXIT_FAILURE);
     }
     if (INTEGER != statement->args.params[0]->type) {
       clog_error(__FILE_NAME__, "Wachten moet een numerieke waarde hebben als "
                                 "parameter: Wachten(10);");
+      free(node);
       exit(EXIT_FAILURE);
     }
     node->register_2bytes = statement->args.params[0]->value.integer;
@@ -113,12 +115,15 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     if (2 != statement->args.count) {
       clog_error(__FILE_NAME__,
                  "Zet_poort_aan heeft 2 parameter nodig (hsio, poort)");
+      free(node);
       exit(EXIT_FAILURE);
     }
     if ((0 == strcasecmp("default", statement->args.params[0]->name)) ||
         (0 == strcasecmp("default", statement->args.params[1]->name))) {
       clog_error(__FILE_NAME__,
                  "De parameters van zet_poort_aan moeten hsio en poort zijn.");
+      free(node);
+
       exit(EXIT_FAILURE);
     }
 
@@ -149,12 +154,14 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     if (2 != statement->args.count) {
       clog_error(__FILE_NAME__,
                  "Zet_poort_uit heeft 2 parameter nodig (hsio, poort)");
+      free(node);
       exit(EXIT_FAILURE);
     }
     if ((0 == strcasecmp("default", statement->args.params[0]->name)) ||
         (0 == strcasecmp("default", statement->args.params[1]->name))) {
       clog_error(__FILE_NAME__,
                  "De parameters van zet_poort_uit moeten hsio en poort zijn.");
+      free(node);
       exit(EXIT_FAILURE);
     }
 
@@ -190,6 +197,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
         (0 == strcasecmp("default", statement->args.params[1]->name))) {
       clog_error(__FILE_NAME__,
                  "De parameters van flip_poort moeten hsio en poort zijn.");
+      free(node);
       exit(EXIT_FAILURE);
     }
 
@@ -252,7 +260,7 @@ int ast_convert_itteration_1(const statement_list_t *statements,
   for (int index = 0; index < statements->count; index++) {
     switch (statements->statements[index]->kind) {
     case TYPE_LABEL:
-      labels[index_label] = malloc(sizeof(label_node_t *));
+      labels[index_label] = malloc(sizeof *labels[index_label]);
       labels[index_label]->index_first_opcode = (index_opcode>0) ? index_opcode - 1 : 0;
       labels[index_label]->label = strdup(statements->statements[index]->name);
       clog_info(__FILE_NAME__,
@@ -334,4 +342,23 @@ int ast_convert_itteration_2(node_collection_t *node_collection) {
   }
 
   return EXIT_SUCCESS;
+}
+
+/**
+ * @brief Free the memory allocated for a node_collection_t
+ * 
+ * @param nc The node_collection_t to free
+ */
+void ast_free_node_collection(node_collection_t *nc)
+{
+  for(size_t i=0; i<nc->opcode_count; i++) {
+    free(nc->opcodes[i]);
+  }
+  for (size_t i = 0; i < nc->labels_count; i++) {
+    if(nc->labels[i]->label) {
+      free(nc->labels[i]->label);
+    }
+    free(nc->labels[i]);
+  }
+  free(nc->opcodes);
 }

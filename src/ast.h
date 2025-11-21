@@ -63,6 +63,7 @@ typedef struct node_collection_t {
 int ast_convert_itteration_1(const statement_list_t *statements,
                              node_collection_t *node_collection);
 int ast_convert_itteration_2(node_collection_t *node_collection);
+void ast_free_node_collection(node_collection_t *nc);
 
 #ifdef __cplusplus
 }
