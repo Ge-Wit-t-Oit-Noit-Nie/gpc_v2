@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "--input",
+                "${workspaceFolder}/samples/blinky.gpc",
+                "--output",
+                "${workspaceFolder}/build/blinky.bin"
+            ], // ← <-- put your args here
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+        }
+    ]
+}

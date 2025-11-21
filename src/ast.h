@@ -1,54 +1,68 @@
 /**
- * @file ast.h
- * @brief Abstract Syntax Tree definitions
+ * @file   ast.h
+ * @brief  Abstract Syntax Tree (AST) definitions for the parser.
+ *
+ * This header declares the core data structures used to represent the
+ * intermediate representation of a program after parsing:
+ *
+ *   • `opcode_node_t` – a single opcode together with its operand(s) and
+ *     optional label reference.
+ *   • `label_node_t` – a symbolic label and the index of the first opcode
+ *     that belongs to that label.
+ *   • `node_colection_t` – containers that aggregate all opcodes and labels
+ *     produced during AST construction.
+ *
+ * Two conversion passes are exposed:
+ *
+ *   int ast_convert_iteration_1(const statement_list_t *statements,
+ *                          node_collection_t *node_collection);
+ *       // First pass: populates `node_collection` with opcodes and labels.
+ *
+ *   int ast_convert_iteration_2(const statement_list_t *statements);
+ *       // Second pass: resolves forward‑references, performs optimizations,
+ *     // etc.
+ *
+ * The API is C‑compatible and can be used from C++ code via the
+ * `extern "C"` guards.
+ *
+ * @author  R. Middel
+ * @date   2025‑11‑19
+ * @license MIT
+ * 
  */
 #ifndef __AST_H__
 #define __AST_H__
+
+#include "parser.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * @brief The operation type
- */
-typedef enum EStatementType { TYPE_LABEL, TYPE_INSTRUCTION } EStatementType;
+typedef struct opcode_node_t {
+  uint8_t opcode;
+  uint16_t register_2bytes;
+  uint32_t register_4bytes;
+  size_t size_in_bytes;
+  char *label_ref;
+} opcode_node_t;
 
-typedef struct parameter_s {
-  char *name;
-  union value {
-    char *string;
-    uint16_t integer;
-  } value;
-  enum { STRING, INTEGER } type;
-} parameter_t;
+typedef struct label_node_t {
+  char *label;
+  size_t index_first_opcode;
+  size_t index_memory;
+} label_node_t;
 
-typedef struct statement_s {
-  EStatementType kind;
+typedef struct node_collection_t {
+  opcode_node_t **opcodes;
+  label_node_t **labels;
+  size_t labels_count;
+  size_t opcode_count;
+} node_collection_t;
 
-  char *name;
-  struct {
-    int count;
-    parameter_t **params;
-  } args;
-
-} statement_t;
-
-typedef struct statement_list_s {
-  int count;
-  statement_t **statements;
-} statement_list_t;
-
-parameter_t *ast_create_parameter_string(const char *name, const char *value);
-parameter_t *ast_create_parameter_integer(const char *name, int value);
-statement_t *ast_create_instruction(const char *name, parameter_t **params,
-                                    size_t param_count);
-statement_t *ast_create_label(const char *name);
-
-int ast_parse_string(const char *expr, statement_list_t **statements);
-int ast_convert_itteration_1(const statement_list_t *statements);
-int ast_convert_itteration_2(const statement_list_t *statements);
-void ast_delete_statements(statement_list_t *statements);
+int ast_convert_itteration_1(const statement_list_t *statements,
+                             node_collection_t *node_collection);
+int ast_convert_itteration_2(node_collection_t *node_collection);
 
 #ifdef __cplusplus
 }

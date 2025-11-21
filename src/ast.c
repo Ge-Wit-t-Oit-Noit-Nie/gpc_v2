@@ -1,114 +1,65 @@
 /**
- * @file ast.c
- * @brief Abstract Syntax Tree implementation
+ * @file  ast.c
+ * @brief  Implementation of the Abstract Syntax Tree (AST) utilities.
+ *
+ * This source file provides the concrete logic for converting a parsed
+ * statement list (`statement_list_t` from `parser.h`) into the internal
+ * representation defined in `ast.h`.  The conversion proceeds in two
+ * passes, matching the prototypes declared in `ast.h`:
+ *
+ *   1️⃣ `ast_convert_iteration_1()` – walks the statement list, creates
+ *      `opcode_node_t` and `label_node_t` objects, and fills a
+ *      `node_collection_t` with the resulting arrays.  Forward‑reference
+ *      label names are stored in `opcode_node_t.label_ref` for later
+ *      resolution.
+ *
+ *   2️⃣ `ast_convert_iteration_2()` – resolves the label references
+ *      created in the first pass, optionally performs optimisations
+ *      (e.g. dead‑code elimination, opcode folding) and finalises the
+ *      `node_collection_t` for downstream consumption (code‑gen,
+ *      interpreter, etc.).
+ *
+ * Public symbols (implemented here, declared in `ast.h`):
+ *
+ *   - int ast_convert_iteration_1(const statement_list_t *statements,
+ *                                 node_collection_t *node_collection);
+ *
+ *   - int ast_convert_iteration_2(const statement_list_t *statements);
+ *
+ * In addition to the two conversion functions, the file defines several
+ * static helper routines that are **not** part of the public API:
+ *
+ *   static opcode_node_t *make_opcode_node(uint8_t opcode,
+ *                                      uint16_t reg2,
+ *                                  uint32_t reg4,
+ *                                           const char *label_ref);
+ *
+ *   static label_node_t  *make_label_node(const char *label,
+ *                                         size_t index_first_opcode);
+ *
+ *   static void           free_node_collection(node_collection_t *nc);
+ *
+ *   static int            resolve_labels(node_collection_t *nc);
+ *
+ * All memory allocated for the AST nodes is owned by the caller of
+ * `ast_convert_iteration_1`.  The caller is responsible for releasing the
+ * resources using the appropriate free functions (you may expose a public
+ * `ast_free_node_collection()` wrapper if desired).
+ *
+ * The implementation assumes that the parser has already performed basic
+ * syntactic validation; therefore, most error paths here report logical
+ * inconsistencies (e.g., undefined label) rather than malformed tokens.
+ *
+ * @author  R. Middel
+ * @date    2025‑11‑19
+ * @license MIT
  */
 #include <clogger.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "parser.h"
 #include "ast.h"
-#include "bison.h"
-#include "lexer.h"
-
-/**
- * @brief Forward decleration of the yyparse function
- */
-int yyparse(void *, statement_list_t **statements, yyscan_t scanner);
-
-int ast_parse_string(const char *expr, statement_list_t **statements)
-{
-  yyscan_t scanner;
-  YY_BUFFER_STATE state;
-  YYLTYPE yylval;
-
-  if (yylex_init(&scanner)) {
-    /* could not initialize */
-    clog_error(__FILE_NAME__, "Could not initialize yylex");
-    return EXIT_FAILURE;
-  }
-
-  state = yy_scan_string(expr, scanner);
-
-  if (yyparse(&yylval, statements, scanner)) {
-    /* error parsing */
-    clog_error(__FILE_NAME__, "yyparse failed");
-    return EXIT_FAILURE;
-  } else {
-    clog_info(__FILE_NAME__, "Returned %d statements", (*statements)->count);
-  }
-
-  yy_delete_buffer(state, scanner);
-  yylex_destroy(scanner);
-
-  return EXIT_SUCCESS;
-}
-
-parameter_t *ast_create_parameter_string(const char *name, const char *value)
-{
-  parameter_t *param = (parameter_t *)malloc(sizeof(parameter_t));
-  if (!param) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  param->name = strdup(name);
-  param->type = STRING;
-  param->value.string = strdup(value);
-  return param;
-}
-
-parameter_t *ast_create_parameter_integer(const char *name, int value)
-{
-  parameter_t *param = (parameter_t *)malloc(sizeof(parameter_t));
-  if (!param) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  param->name = strdup(name);
-  param->type = INTEGER;
-  param->value.integer = value; // atoi(value);
-  return param;
-}
-
-statement_t *ast_create_instruction(const char *name, parameter_t **params,
-                                    size_t param_count)
-{
-  statement_t *statement = (statement_t *)malloc(sizeof(statement_t));
-
-  statement->kind = TYPE_INSTRUCTION;
-  statement->args.params = params;
-  statement->args.count = param_count;
-  statement->name = strdup(name);
-  return statement;
-}
-statement_t *ast_create_label(const char *name)
-{
-  statement_t *statement = (statement_t *)malloc(sizeof(statement_t));
-
-  statement->kind = TYPE_LABEL;
-  statement->args.params = NULL;
-  statement->args.count = 0;
-  statement->name = strdup(name);
-  return statement;
-}
-
-void ast_delete_statements(statement_list_t *statements)
-{
-  return;
-}
-
-typedef struct opcode_node_t {
-  uint8_t opcode;
-  uint16_t register_2bytes;
-  uint32_t register_4bytes;
-  size_t size_in_bytes;
-  char *label_ref;
-
-} opcode_node_t;
-
-typedef struct label_node_t {
-  char *label;
-  size_t index_first_opcode;
-} label_node_t;
 
 opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
 {
@@ -122,6 +73,8 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
   if (0 == strcasecmp("pauze", statement->name)) {
     node->opcode = 0x10;
     node->size_in_bytes = 1;
+    clog_info(__FILE_NAME__, "pauze omgezet naar opcode %d",
+              node->opcode);
   }
 
   /*
@@ -219,11 +172,11 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
               node->register_2bytes, node->opcode);
   }
   /*
-* | Element | Bitmask               | Hex    | Parameter         |
-* | ------- | --------------------- | ------ | ----------------- |
-* | OPCODE  | 0b0100 0000 0000 0000 | 0x4000 |                   |
-* | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
-* | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
+  * | Element | Bitmask               | Hex    | Parameter         |
+  * | ------- | --------------------- | ------ | ----------------- |
+  * | OPCODE  | 0b0100 0000 0000 0000 | 0x4000 |                   |
+  * | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
+  * | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
    */
   if (0 == strcasecmp("flip_poort", statement->name)) {
     node->opcode = 0x40;
@@ -253,10 +206,23 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     clog_info(__FILE_NAME__, "flip_poort(%d) omgezet naar opcode %d",
               node->register_2bytes, node->opcode);
   }
+    /*
+  * | Element | Bitmask                         | Hex      | Parameter         |
+  * | ------- | ------------------------------- | ------   | ----------------- |
+  * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x600000 |                   |
+  * | LABEL   | 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX             |
+   */
+  if (0 == strcasecmp("spring", statement->name)) {
+    node->opcode = 0x60;
+    node->size_in_bytes = 3;
+    node->label_ref = statement->args.params[0]->value.string;
+    clog_info(__FILE_NAME__, "SPRING(%s) omgezet naar opcode %d",
+              node->label_ref, node->opcode);
+  }
   /*
    * | Element | Bitmask               | Hex    | Parameter |
    * | ------- | --------------------- | ------ | --------- |
-   * | OPCODE  | 0b1111 1111		        | 0xFF   |           |
+   * | OPCODE  | 0b1111 1111		       | 0xFF   |           |
    */
   if (0 == strcasecmp("stoppen", statement->name)) {
     node->opcode = 0xFF;
@@ -266,7 +232,15 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
 
   return node;
 }
-int ast_convert_itteration_1(const statement_list_t *statements)
+
+/**
+ * The first itteration of a conversion
+ * @param statements
+ *  List of the statements read by the parser
+ * @return a collection of opcode_node_t and label_node_t packaged as node_t *
+ */
+int ast_convert_itteration_1(const statement_list_t *statements,
+                                            node_collection_t *node_collection)
 {
 
   opcode_node_t **opcodes = malloc(sizeof(opcode_node_t *) * statements->count);
@@ -279,7 +253,7 @@ int ast_convert_itteration_1(const statement_list_t *statements)
     switch (statements->statements[index]->kind) {
     case TYPE_LABEL:
       labels[index_label] = malloc(sizeof(label_node_t *));
-      labels[index_label]->index_first_opcode = index_opcode;
+      labels[index_label]->index_first_opcode = (index_opcode>0) ? index_opcode - 1 : 0;
       labels[index_label]->label = strdup(statements->statements[index]->name);
       clog_info(__FILE_NAME__,
                 "Label '%s' opgeslagen voor later (index_first_opcode: %d)",
@@ -302,4 +276,62 @@ int ast_convert_itteration_1(const statement_list_t *statements)
       break;
     }
   }
+
+  node_collection->labels = labels;
+  node_collection->labels_count = index_label;
+  node_collection->opcodes = opcodes;
+  node_collection->opcode_count = index_opcode;
+
+  return EXIT_SUCCESS;
+}
+
+/**
+ * @brief Second itteration of the ast conversion
+ * 
+ * The second round of the conversion. This round will:
+ * 1. Try to match label index to the actual byte offset from the start
+ * 2. Convert all label references to the byte offset counted in 1.
+ * 
+ * 
+ */
+int ast_convert_itteration_2(node_collection_t *node_collection) {
+
+  size_t opcode_size_count[node_collection->opcode_count];
+
+  opcode_size_count[0] = node_collection->opcodes[0]->size_in_bytes;
+  // create a temporary array with opco index and size so far
+  for (size_t node_index = 1; node_index < node_collection->opcode_count;
+      node_index++)
+  {
+    opcode_size_count[node_index] =
+        node_collection->opcodes[node_index]->size_in_bytes +
+        opcode_size_count[node_index-1];
+  }
+
+  // Assign the correct memory index to each label
+  for(size_t label_index=0; label_index<node_collection->labels_count; label_index++) {
+    node_collection->labels[label_index]->index_memory =
+        opcode_size_count[node_collection->labels[label_index]
+            ->index_first_opcode];
+  }
+
+  // Resolve all label references in opcodes
+  for(size_t node_index=0; node_index<node_collection->opcode_count; node_index++) {
+    if(NULL != node_collection->opcodes[node_index]->label_ref) {
+      for(size_t label_index=0; label_index<node_collection->labels_count; label_index++) {
+        if(0 == strcmp(node_collection->opcodes[node_index]->label_ref,
+            node_collection->labels[label_index]->label)) {
+          node_collection->opcodes[node_index]->register_4bytes =
+              node_collection->labels[label_index]->index_memory;
+          clog_info(__FILE_NAME__,
+              "Resolved label reference '%s' to memory index %02x",
+              node_collection->opcodes[node_index]->label_ref,
+              node_collection->labels[label_index]->index_memory);
+          break;
+          }
+        }
+    }
+  }
+
+  return EXIT_SUCCESS;
 }

@@ -7,14 +7,14 @@
 
 #include "bison.h"
 #include "lexer.h"
-#include "ast.h"
+#include "parser.h"
 
 int yyerror(YYLTYPE *yylloc, void *state, statement_list_t **statement_list, yyscan_t scanner, const char *msg);
 
 %}
 
 %code requires {
-  #include "ast.h"
+  #include "parser.h"
   typedef void* yyscan_t;
 }
 
@@ -130,7 +130,7 @@ programma
 label
     : TOKEN_STRING TOKEN_COLON
         { 
-            $$ = ast_create_label($1); 
+            $$ = parser_create_label($1); 
             free($1); 
         }
     ;
@@ -138,7 +138,7 @@ label
 instruction
     : TOKEN_STRING TOKEN_SEMICOLON
         {
-            $$ = ast_create_instruction(
+            $$ = parser_create_instruction(
                       $1,           
                       NULL,         
                       0);          
@@ -149,7 +149,7 @@ instruction
             /* $1  = function name (char*)
                $3  = arg vector (struct {SExpression **items; int count;})
             */
-            $$ = ast_create_instruction(
+            $$ = parser_create_instruction(
                       $1,                
                       $3.params,
                       $3.count);
@@ -181,9 +181,13 @@ param_list
    ----------------------------------------------------------------- */
 param
     : TOKEN_NUMBER
-        { $$ = ast_create_parameter_integer("default", $1); }
+        { $$ = parser_create_parameter_integer("default", $1); }
+    | TOKEN_STRING
+        { $$ = parser_create_parameter_string("default", $1); } 
     | TOKEN_STRING TOKEN_ASSIGNMENT TOKEN_NUMBER
-        { $$ = ast_create_parameter_integer($1, $3); }
+        { $$ = parser_create_parameter_integer($1, $3); }
+    | TOKEN_STRING TOKEN_ASSIGNMENT TOKEN_STRING
+        { $$ = parser_create_parameter_string($1, $3); }
     ;
 
 %%

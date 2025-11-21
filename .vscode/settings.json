@@ -46,6 +46,23 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "ast.h": "c"
-    }
+        "ast.h": "c",
+        "parser.h": "c",
+        "stdint.h": "c",
+        "errno.h": "c"
+    },
+        "cmake.debugConfig": {
+            "args": [
+                "--input",
+                "${workspaceFolder}/samples/blinky.gpc",
+                "--output",
+                "${workspaceFolder}/build/blinky.bin"
+            ]
+        },
+        "cmake.runArgs": [
+                "--input",
+                "${workspaceFolder}/samples/blinky.gpc",
+                "--output",
+                "${workspaceFolder}/build/blinky.bin"
+        ]
 }

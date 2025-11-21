@@ -1,7 +1,7 @@
 %{
 #include "bison.h"
 #include <string.h>
-#include "ast.h"
+#include "parser.h"
 #include <stdlib.h>
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno;

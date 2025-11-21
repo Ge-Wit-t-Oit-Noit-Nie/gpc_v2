@@ -8,6 +8,7 @@ find_package(FLEX  REQUIRED)
 set(PROJECT_SOURCES
     main.c
     ast.c
+    binary.c
 )
 
 # -------------------------------------------------------------
@@ -44,6 +45,7 @@ add_custom_command(
 add_library(gpcparser OBJECT
     ${FLEX_OUTPUT_C}
     ${BISON_OUTPUT_C}
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser.c
     # Add any hand‑written .c files that belong to the parser here:
     # ast.c codegen.c vm.c
 )
@@ -55,6 +57,9 @@ target_include_directories(gpcparser PUBLIC
     ${PROJECT_SOURCE_DIR}/lib/clogger/src    
 )
 
+# --------------------------------------------------------------
+# Main executable
+# --------------------------------------------------------------
 add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCES}
 )

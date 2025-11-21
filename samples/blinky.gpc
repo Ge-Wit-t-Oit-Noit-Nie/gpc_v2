@@ -1,0 +1,16 @@
+START:
+    zet_poort_uit(poort=1, hsio=0);
+    wachten(0xff);
+    spring(label=blinky);
+    STOPPEN;
+
+BLINKY:
+    zet_poort_aan(poort=1, hsio=0);
+    wachten(0xff);
+    zet_poort_uit(poort=1, hsio=0);
+    wachten(0xff);
+    spring(label=BLINKY);
+
+EINDE:
+    zet_poort_uit(poort=1, hsio=0);
+    STOPPEN;
