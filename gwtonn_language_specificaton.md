@@ -40,12 +40,10 @@ param_list := IDENTIFIER? VALUE ","?
 
 ## 5. Semantics
 ### 5.1 Scoping
-Block‑scoped variables; functions introduce a new lexical scope.
+no scoping;
 
 ### 5.2 Type System
 - Primitive types: `int`, `bool`, `string`.
-- Composite: `array<T>`, `fn(T1,…,Tn) -> R`.
-- No implicit coercion; explicit casts required.
 
 ### 5.3 Evaluation Order
 Expressions are evaluated left‑to‑right; side effects occur in that order.
@@ -61,6 +59,3 @@ Expressions are evaluated left‑to‑right; side effects occur in that order.
 ### A. Full Bison Grammar (`bison.y`)
 
 [bison.y](/src/bison.y)
-
-*End of Specification*
-

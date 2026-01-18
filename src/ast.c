@@ -247,7 +247,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
  *  List of the statements read by the parser
  * @return a collection of opcode_node_t and label_node_t packaged as node_t *
  */
-int ast_convert_itteration_1(const statement_list_t *statements,
+int ast_convert_iteration_1(const statement_list_t *statements,
                                             node_collection_t *node_collection)
 {
 
@@ -302,7 +302,7 @@ int ast_convert_itteration_1(const statement_list_t *statements,
  * 
  * 
  */
-int ast_convert_itteration_2(node_collection_t *node_collection) {
+int ast_convert_iteration_2(node_collection_t *node_collection) {
 
   size_t opcode_size_count[node_collection->opcode_count];
 
@@ -327,7 +327,7 @@ int ast_convert_itteration_2(node_collection_t *node_collection) {
   for(size_t node_index=0; node_index<node_collection->opcode_count; node_index++) {
     if(NULL != node_collection->opcodes[node_index]->label_ref) {
       for(size_t label_index=0; label_index<node_collection->labels_count; label_index++) {
-        if(0 == strcmp(node_collection->opcodes[node_index]->label_ref,
+        if(0 == strcasecmp(node_collection->opcodes[node_index]->label_ref,
             node_collection->labels[label_index]->label)) {
           node_collection->opcodes[node_index]->register_4bytes =
               node_collection->labels[label_index]->index_memory;

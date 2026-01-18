@@ -69,7 +69,7 @@ static struct option long_opts[] = {
     {0, 0, 0, 0} /* terminator */
 };
 /* Short options string: h and v are flags, o and i requires an argument */
-const char *short_opts = "hvo:";
+const char *short_opts = "hvio:";
 
 /**
  * @brief Reads the entire content of a source file into a dynamically allocated
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
              "  -h, --help          Show this help\n"
              "  -v, --verbose       Enable verbose output\n"
              "  -o, --output FILE   Write results to FILE\n"
-             "  -i, --input FILE   Write results to FILE\n",
+             "  -i, --input FILE    FILE with the sourcecode\n",
              argv[0]);
       exit(EXIT_SUCCESS);
     case 'v': /* --verbose or -v */
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  statement_list_t *statements = malloc(sizeof(statement_list_t *));
+  statement_list_t *statements = malloc(sizeof(statement_list_t));
   // 1. Parse the program
   parser_parse_string(source_code, &statements);
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
   if (0 == statements->count) {
     clog_info(__FILE_NAME__, "No statements parsed");
     free((void *)source_code);
-    free(statements);
+    parser_free_statements(statements);
     return EXIT_FAILURE;
   } else {
     free((void *)source_code);
@@ -213,10 +213,10 @@ int main(int argc, char *argv[])
   node_collection_t *node_collection = malloc(sizeof(node_collection_t));
 
   // 2. Perform the first itteration of the convertion
-  ast_convert_itteration_1(statements, node_collection);
-  
+  ast_convert_iteration_1(statements, node_collection);
+
   // 3. Perform the second itteration of the convertion
-  ast_convert_itteration_2(node_collection);
+  ast_convert_iteration_2(node_collection);
 
   // Store the program
   binary_write_program(file_output, node_collection);
