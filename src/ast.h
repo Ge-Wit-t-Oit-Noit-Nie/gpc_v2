@@ -60,9 +60,34 @@ typedef struct node_collection_t {
   size_t opcode_count;
 } node_collection_t;
 
+/**
+* @brief Perform the first iteration of conversion
+* A normal conversion is done in multiple steps.
+* This function will perform the first step.
+* 
+* @param statements A list of statements that needs to be converted
+* @param node_collection The list of AST nodes that is generated in this conversion
+* @return 0 for SUCCESS
+*/
 int ast_convert_iteration_1(const statement_list_t *statements,
                              node_collection_t *node_collection);
+
+/**
+* @brief Perform the second iteration of conversion
+* A normal conversion is done in multiple steps.
+* This function will perform the second step.
+* 
+* The second step will: 
+* 1. Update any references to labels
+* @param node_collection The list of AST nodes that is converted in this conversion
+* @return 0 for SUCCESS
+*/                             
 int ast_convert_iteration_2(node_collection_t *node_collection);
+/**
+ * @brief Free the memory allocated for a node_collection_t
+ *
+ * @param nc The node_collection_t to free
+ */
 void ast_free_node_collection(node_collection_t *nc);
 
 #ifdef __cplusplus

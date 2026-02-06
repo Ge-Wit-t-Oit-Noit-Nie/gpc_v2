@@ -8,10 +8,13 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"codezombiech.gitignore"
+				"codezombiech.gitignore",
+				"ms-vscode.cmake-tools",
+				"ms-vscode.cpptools-extension-pack",
+				"xaver.clang-format"
 			]
 		}
-	},
+	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 

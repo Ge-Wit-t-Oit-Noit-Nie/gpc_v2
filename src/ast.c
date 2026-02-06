@@ -58,8 +58,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
 #include "ast.h"
+#include "parser.h"
 
 opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
 {
@@ -73,8 +73,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
   if (0 == strcasecmp("pauze", statement->name)) {
     node->opcode = 0x10;
     node->size_in_bytes = 1;
-    clog_info(__FILE_NAME__, "pauze omgezet naar opcode %d",
-              node->opcode);
+    clog_info(__FILE_NAME__, "pauze omgezet naar opcode %d", node->opcode);
   }
 
   /*
@@ -179,11 +178,11 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
               node->register_2bytes, node->opcode);
   }
   /*
-  * | Element | Bitmask               | Hex    | Parameter         |
-  * | ------- | --------------------- | ------ | ----------------- |
-  * | OPCODE  | 0b0100 0000 0000 0000 | 0x4000 |                   |
-  * | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
-  * | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
+   * | Element | Bitmask               | Hex    | Parameter         |
+   * | ------- | --------------------- | ------ | ----------------- |
+   * | OPCODE  | 0b0100 0000 0000 0000 | 0x4000 |                   |
+   * | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
+   * | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
    */
   if (0 == strcasecmp("flip_poort", statement->name)) {
     node->opcode = 0x40;
@@ -214,11 +213,11 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     clog_info(__FILE_NAME__, "flip_poort(%d) omgezet naar opcode %d",
               node->register_2bytes, node->opcode);
   }
-    /*
-  * | Element | Bitmask                         | Hex      | Parameter         |
-  * | ------- | ------------------------------- | ------   | ----------------- |
-  * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x600000 |                   |
-  * | LABEL   | 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX             |
+  /*
+   * | Element | Bitmask                         | Hex      | Parameter | |
+   * ------- | ------------------------------- | ------   | ----------------- |
+   * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x600000 | | | LABEL   |
+   * 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX             |
    */
   if (0 == strcasecmp("spring", statement->name)) {
     node->opcode = 0x60;
@@ -248,7 +247,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
  * @return a collection of opcode_node_t and label_node_t packaged as node_t *
  */
 int ast_convert_iteration_1(const statement_list_t *statements,
-                                            node_collection_t *node_collection)
+                            node_collection_t *node_collection)
 {
 
   opcode_node_t **opcodes = malloc(sizeof(opcode_node_t *) * statements->count);
@@ -261,7 +260,8 @@ int ast_convert_iteration_1(const statement_list_t *statements,
     switch (statements->statements[index]->kind) {
     case TYPE_LABEL:
       labels[index_label] = malloc(sizeof *labels[index_label]);
-      labels[index_label]->index_first_opcode = (index_opcode>0) ? index_opcode - 1 : 0;
+      labels[index_label]->index_first_opcode =
+          (index_opcode > 0) ? index_opcode - 1 : 0;
       labels[index_label]->label = strdup(statements->statements[index]->name);
       clog_info(__FILE_NAME__,
                 "Label '%s' opgeslagen voor later (index_first_opcode: %d)",
@@ -295,49 +295,52 @@ int ast_convert_iteration_1(const statement_list_t *statements,
 
 /**
  * @brief Second itteration of the ast conversion
- * 
+ *
  * The second round of the conversion. This round will:
  * 1. Try to match label index to the actual byte offset from the start
  * 2. Convert all label references to the byte offset counted in 1.
- * 
- * 
+ *
+ *
  */
-int ast_convert_iteration_2(node_collection_t *node_collection) {
+int ast_convert_iteration_2(node_collection_t *node_collection)
+{
 
   size_t opcode_size_count[node_collection->opcode_count];
 
   opcode_size_count[0] = node_collection->opcodes[0]->size_in_bytes;
   // create a temporary array with opco index and size so far
   for (size_t node_index = 1; node_index < node_collection->opcode_count;
-      node_index++)
-  {
+       node_index++) {
     opcode_size_count[node_index] =
         node_collection->opcodes[node_index]->size_in_bytes +
-        opcode_size_count[node_index-1];
+        opcode_size_count[node_index - 1];
   }
 
   // Assign the correct memory index to each label
-  for(size_t label_index=0; label_index<node_collection->labels_count; label_index++) {
+  for (size_t label_index = 0; label_index < node_collection->labels_count;
+       label_index++) {
     node_collection->labels[label_index]->index_memory =
         opcode_size_count[node_collection->labels[label_index]
-            ->index_first_opcode];
+                              ->index_first_opcode];
   }
 
   // Resolve all label references in opcodes
-  for(size_t node_index=0; node_index<node_collection->opcode_count; node_index++) {
-    if(NULL != node_collection->opcodes[node_index]->label_ref) {
-      for(size_t label_index=0; label_index<node_collection->labels_count; label_index++) {
-        if(0 == strcasecmp(node_collection->opcodes[node_index]->label_ref,
-            node_collection->labels[label_index]->label)) {
+  for (size_t node_index = 0; node_index < node_collection->opcode_count;
+       node_index++) {
+    if (NULL != node_collection->opcodes[node_index]->label_ref) {
+      for (size_t label_index = 0; label_index < node_collection->labels_count;
+           label_index++) {
+        if (0 == strcasecmp(node_collection->opcodes[node_index]->label_ref,
+                            node_collection->labels[label_index]->label)) {
           node_collection->opcodes[node_index]->register_4bytes =
               node_collection->labels[label_index]->index_memory;
           clog_info(__FILE_NAME__,
-              "Resolved label reference '%s' to memory index %02x",
-              node_collection->opcodes[node_index]->label_ref,
-              node_collection->labels[label_index]->index_memory);
+                    "Resolved label reference '%s' to memory index %02x",
+                    node_collection->opcodes[node_index]->label_ref,
+                    node_collection->labels[label_index]->index_memory);
           break;
-          }
         }
+      }
     }
   }
 
@@ -346,19 +349,23 @@ int ast_convert_iteration_2(node_collection_t *node_collection) {
 
 /**
  * @brief Free the memory allocated for a node_collection_t
- * 
+ *
  * @param nc The node_collection_t to free
  */
 void ast_free_node_collection(node_collection_t *nc)
 {
-  for(size_t i=0; i<nc->opcode_count; i++) {
+  if(NULL==nc)
+    return;
+
+  for (size_t i = 0; i < nc->opcode_count; i++) {
     free(nc->opcodes[i]);
   }
   for (size_t i = 0; i < nc->labels_count; i++) {
-    if(nc->labels[i]->label) {
+    if (nc->labels[i]->label) {
       free(nc->labels[i]->label);
     }
     free(nc->labels[i]);
   }
   free(nc->opcodes);
+
 }

@@ -31,6 +31,7 @@
  * @date    2025‑11‑19
  * @license MIT (or your project's license)
  */
+#include <clogger.h>
 
 #include "ast.h"
 #include "bison.h"
