@@ -2,18 +2,21 @@
 
 ## About the Project
 
-A compiler to compile (dutch) program language. The output will be an object file that can be loaded on the STM32 as a **program** in the specified space (see Firmware for more info). 
+A compiler to compile (dutch) program language. The output will be an object file that can be loaded on the STM32 as a **program** in the specified space (see Firmware for more info).
 
 ## Lanuage specification
 
-The compiler compiles a customized language. The specifications of the language can be found [here](./gwtonn_language_specificaton.md)
+The compiler compiles a customized language. The specifications of the language can be found [in this specification file](./gwtonn_language_specificaton.md)
 
 ## Prerequisites
 
-| Tool      | Minimum version | How to install |
-| :--       | :-- | :--|
-| CMake     | 	3.22 |	apt-get install cmake / brew install cmake / choco install cmake |
-| Compiler	| C11‑compatible (GCC ≥ 7, Clang ≥ 5, MSVC ≥ 19.15)	| - |
+| Tool | Minimum version | How to install |
+| :-- | :-- | :-- |
+| CMake | 3.22 | apt-get install cmake / brew install cmake / choco install cmake |
+| Compiler | C11‑compatible (GCC ≥ 7, Clang ≥ 5, MSVC ≥ 19.15) | - |
+| Bison | | apt install -y bison |
+| Flex | | apt install -y flex |
+| clang-format | | apt install -y clang-format |
 
 ## Getting Started
 

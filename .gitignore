@@ -77,3 +77,6 @@ dkms.conf
 
 # Build directories
 build
+
+# Remove cache files
+.cache
