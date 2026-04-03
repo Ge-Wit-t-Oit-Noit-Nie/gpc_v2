@@ -56,8 +56,7 @@
 
 #include "ast.h"
 #include "binary.h"
-#include "bison.h"
-#include "lexer.h"
+
 #include "parser.h"
 
 /* Define the long options */

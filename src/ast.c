@@ -57,6 +57,7 @@
 #include <clogger.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "ast.h"
 #include "parser.h"
@@ -213,6 +214,8 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     clog_info(__FILE_NAME__, "flip_poort(%d) omgezet naar opcode %d",
               node->register_2bytes, node->opcode);
   }
+
+
   /*
    * | Element | Bitmask                         | Hex      | Parameter | |
    * ------- | ------------------------------- | ------   | ----------------- |
@@ -226,7 +229,22 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     clog_info(__FILE_NAME__, "SPRING(%s) omgezet naar opcode %d",
               node->label_ref, node->opcode);
   }
+  
   /*
+   * | Element | Bitmask               | Hex    | Parameter         |
+   * | ------- | --------------------- | ------ | ----------------- |
+   * | OPCODE  | 0b0111 0000 0000 0000 | 0x7000 |                   |
+   * | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
+   * | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
+   */
+  if (0 == strcasecmp("verbind_event_met_functie", statement->name)) {
+    clog_error(__FILE_NAME__,
+                "verbind_event_met_functie nog niet gemaakt");
+    free(node);
+    exit(EXIT_FAILURE);
+  }
+
+   /*
    * | Element | Bitmask               | Hex    | Parameter |
    * | ------- | --------------------- | ------ | --------- |
    * | OPCODE  | 0b1111 1111		       | 0xFF   |           |
