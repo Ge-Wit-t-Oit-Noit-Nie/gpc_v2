@@ -74,7 +74,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
   if (0 == strcasecmp("pauze", statement->name)) {
     node->opcode = 0x10;
     node->size_in_bytes = 1;
-    clog_info(__FILE_NAME__, "pauze omgezet naar opcode %d", node->opcode);
+    clog_info(__FILE_NAME__, "pauze omgezet naar opcode 0x%02X", node->opcode);
   }
 
   /*
@@ -98,7 +98,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
       exit(EXIT_FAILURE);
     }
     node->register_2bytes = statement->args.params[0]->value.integer;
-    clog_info(__FILE_NAME__, "WACHTEN(%d) omgezet naar opcode %d",
+    clog_info(__FILE_NAME__, "WACHTEN(%d) omgezet naar opcode 0x%02X",
               node->register_2bytes, node->opcode);
   }
   /*
@@ -137,7 +137,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
           (statement->args.params[0]->value.integer & 0x1F);
     }
 
-    clog_info(__FILE_NAME__, "zet_poort_aan(%d) omgezet naar opcode %d",
+    clog_info(__FILE_NAME__, "zet_poort_aan(%d) omgezet naar opcode 0x%02X",
               node->register_2bytes, node->opcode);
   }
   /*
@@ -175,7 +175,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
           (statement->args.params[0]->value.integer & 0x1F);
     }
 
-    clog_info(__FILE_NAME__, "zet_poort_uit(%d) omgezet naar opcode %d",
+    clog_info(__FILE_NAME__, "zet_poort_uit(%d) omgezet naar opcode 0x%02X",
               node->register_2bytes, node->opcode);
   }
   /*
@@ -211,10 +211,20 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
           (statement->args.params[0]->value.integer & 0x1F);
     }
 
-    clog_info(__FILE_NAME__, "flip_poort(%d) omgezet naar opcode %d",
+    clog_info(__FILE_NAME__, "flip_poort(%d) omgezet naar opcode 0x%02X",
               node->register_2bytes, node->opcode);
   }
-
+  
+  /*
+   * | Element | Bitmask               | Hex    | Parameter         |
+   * | ------- | --------------------- | ------ | ----------------- |
+   * | OPCODE  | 0b0101 0000 0000 0000 | 0x5000 |                   |
+   */
+  if (0 == strcasecmp("bewaar_status", statement->name)) {
+    node->opcode = 0x50;
+    node->size_in_bytes = 1;
+    clog_info(__FILE_NAME__, "Bewaar_status omgezet naar opcode 0x%02X", node->opcode);
+  }
 
   /*
    * | Element | Bitmask                         | Hex      | Parameter | 
@@ -226,7 +236,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
     node->opcode = 0x60;
     node->size_in_bytes = 3;
     node->label_ref = statement->args.params[0]->value.string;
-    clog_info(__FILE_NAME__, "SPRING(%s) omgezet naar opcode %d",
+    clog_info(__FILE_NAME__, "SPRING(%s) omgezet naar opcode 0x%02X",
               node->label_ref, node->opcode);
   }
   
@@ -303,7 +313,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
               statement->args.params[0]->value.string, node->label_ref, node->opcode);
   }
 
-   /*
+  /*
    * | Element | Bitmask               | Hex    | Parameter |
    * | ------- | --------------------- | ------ | --------- |
    * | OPCODE  | 0b1111 1111		       | 0xFF   |           |
@@ -311,7 +321,7 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
   if (0 == strcasecmp("stoppen", statement->name)) {
     node->opcode = 0xFF;
     node->size_in_bytes = 1;
-    clog_info(__FILE_NAME__, "STOPPEN omgezet naar opcode %d", node->opcode);
+    clog_info(__FILE_NAME__, "STOPPEN omgezet naar opcode 0x%02X", node->opcode);
   }
 
   return node;
