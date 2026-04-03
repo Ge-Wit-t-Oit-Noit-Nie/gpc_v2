@@ -6,7 +6,7 @@ A compiler to compile (dutch) program language. The output will be an object fil
 
 ## Lanuage specification
 
-The compiler compiles a customized language. The specifications of the language can be found [in this specification file](./gwtonn_language_specificaton.md)
+The compiler compiles a customized language. The specifications of the language can be found [in this specification file](./gwtonn_language_specification.md)
 
 ## Prerequisites
 
@@ -21,8 +21,8 @@ The compiler compiles a customized language. The specifications of the language 
 ## Getting Started
 
 ```sh
-git clone [https://github.com/Ge-Wit-t-Oit-Noit-Nie/gpc.git](https://github.com/Ge-Wit-t-Oit-Noit-Nie/gpc.git)
-cd gpc
+git clone [https://github.com/Ge-Wit-t-Oit-Noit-Nie/gpc_v2.git](https://github.com/Ge-Wit-t-Oit-Noit-Nie/gpc_v2.git)
+cd gpc_v2
 git submodule update --init   # if you use submodules
 ```
 
