@@ -1,9 +1,10 @@
     verbind_event_met_functie(STOP, label=EINDE);
     verbind_event_met_functie(PAUZE, label=PAUZE_PROGRAMMA);
     verbind_event_met_functie(VERVOLG, label=LINKS);
+    verbind_event_met_functie(INT01, label=LINKS);
 
     verbind_event_met_functie(INT06, label=PAUZE_PROGRAMMA);
-    BEWAAR_STATUS;
+
     spring(label=RESET);
 
 

@@ -21,7 +21,7 @@ DIGIT       [0-9]
 LETTER      [A-Za-z_]
 NUMBER      {DIGIT}+
 HEXNUMBER   0[xX][0-9A-Fa-f]+
-STRING      {LETTER}+
+STRING      {LETTER}({LETTER}|{DIGIT})+
 
 /* ------------------------------------------------------------------ */
 
