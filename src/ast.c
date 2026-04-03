@@ -217,10 +217,10 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
 
 
   /*
-   * | Element | Bitmask                         | Hex      | Parameter | |
-   * ------- | ------------------------------- | ------   | ----------------- |
-   * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x600000 | | | LABEL   |
-   * 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX             |
+   * | Element | Bitmask                         | Hex      | Parameter | 
+   * | ------- | ------------------------------- | ------   | ----------------- |
+   * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x600000 | - | 
+   * | LABEL   | 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX             |
    */
   if (0 == strcasecmp("spring", statement->name)) {
     node->opcode = 0x60;
@@ -231,17 +231,76 @@ opcode_node_t *ast_generate_opcode_node(const statement_t *statement)
   }
   
   /*
-   * | Element | Bitmask               | Hex    | Parameter         |
-   * | ------- | --------------------- | ------ | ----------------- |
-   * | OPCODE  | 0b0111 0000 0000 0000 | 0x7000 |                   |
-   * | HSIO    | 0b0000 0010 0000 0000 | 0x0200 | HSIO (0x0 / 0x01) |
-   * | POORT   | 0b0000 0000 0001 1111 | 0x001F | POORT             |
+   * | Element | Bitmask                         | Hex      | Parameter | 
+   * | ------- | ------------------------------- | ------   | --- |
+   * | OPCODE  | 0b0111 0000 0000 0000 0000 0000 | 0x700000 | - | 
+   * | EVENT   | 0b0000 1110 0000 0000 0000 0000 | 0x0E0000 | EVENT |
+   * | LABEL   | 0b0000 0001 1111 1111 1111 1111 | 0x01FFFF | INDEX |
+   *
+   * Beschrijving van de events:
+   * - stop: Dit event wordt geactiveerd via de CAN bus en zorgt ervoor dat het
+   *          programma onmiddellijk stopt.
+   * - pauze: Dit event wordt geactiveerd via de CAN bus en zorgt ervoor dat
+   *          het programma onmiddellijk pauzeert.
+   * - vervolg: Dit event wordt geactiveerd via de CAN bus en zorgt ervoor dat
+   *          het programma vervolgt na een pauze.
+   * - int00 t/m int11: Deze events worden geactiveerd door een interrupt
+   *                    op de respectievelijke poorten (0 t/m 11) en kunnen
+   *                    worden gebruikt om specifieke acties te triggeren
+   *                    wanneer een interrupt plaatsvindt.
+   *
+   * NOTE: De event-naam wordt mee geregistreerd in the opcode. De reden is 
+   * dat de hoogste 3 bits niet meegenomen worden uit de register_2bytes.
+   * Tevens wordt de label_ref omgezet en ingevult op een speciale manier.
    */
   if (0 == strcasecmp("verbind_event_met_functie", statement->name)) {
-    clog_error(__FILE_NAME__,
-                "verbind_event_met_functie nog niet gemaakt");
-    free(node);
-    exit(EXIT_FAILURE);
+
+    if (2 != statement->args.count) {
+      clog_error(__FILE_NAME__,
+                 "verbind_event_met_functie heeft 2 parameter nodig (event, label)");
+      exit(EXIT_FAILURE);
+    }
+
+    node->size_in_bytes = 3;
+    if (0 == strcasecmp("stop", statement->args.params[0]->value.string)) {
+      node->opcode = 0x70;
+    } else if (0 == strcasecmp("pauze", statement->args.params[0]->value.string)) {
+      node->opcode = 0x71;
+    } else if (0 == strcasecmp("vervolg", statement->args.params[0]->value.string)) {
+      node->opcode = 0x72;
+    } else if (0 == strcasecmp("int00", statement->args.params[0]->value.string)) {
+      node->opcode = 0x73;
+    } else if (0 == strcasecmp("int01", statement->args.params[0]->value.string)) {
+      node->opcode = 0x74;
+    } else if (0 == strcasecmp("int02", statement->args.params[0]->value.string)) {
+      node->opcode = 0x75;
+    } else if (0 == strcasecmp("int03", statement->args.params[0]->value.string)) {
+      node->opcode = 0x76;
+    } else if (0 == strcasecmp("int04", statement->args.params[0]->value.string)) {
+      node->opcode = 0x77;
+    } else if (0 == strcasecmp("int05", statement->args.params[0]->value.string)) {
+      node->opcode = 0x78;
+    } else if (0 == strcasecmp("int06", statement->args.params[0]->value.string)) {
+      node->opcode = 0x79;
+    } else if (0 == strcasecmp("int07", statement->args.params[0]->value.string)) {
+      node->opcode = 0x7A;
+    } else if (0 == strcasecmp("int08", statement->args.params[0]->value.string)) {
+      node->opcode = 0x7B;
+    } else if (0 == strcasecmp("int09", statement->args.params[0]->value.string)) {
+      node->opcode = 0x7C;
+    } else if (0 == strcasecmp("int10", statement->args.params[0]->value.string)) {
+      node->opcode = 0x7D;
+    } else if (0 == strcasecmp("int11", statement->args.params[0]->value.string)) {
+      node->opcode = 0x7E;
+    } else {
+            clog_error(__FILE_NAME__,
+                 "verbind_event_met_functie heeft geen geldig event als parameter (stop, pauze, vervolg)");
+      exit(EXIT_FAILURE);
+    }
+
+    node->label_ref = statement->args.params[1]->value.string;
+    clog_info(__FILE_NAME__, "event %s is verbonden met label %s en omgezet naar opcode 0x%02X",
+              statement->args.params[0]->value.string, node->label_ref, node->opcode);
   }
 
    /*
